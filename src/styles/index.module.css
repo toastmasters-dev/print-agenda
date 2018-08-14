@@ -1,0 +1,91 @@
+.root .heading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  align-items: baseline;
+}
+
+.root .heading > * {
+  margin: 0;
+}
+
+.root thead tr td {
+  font-weight: bold;
+  padding-bottom: 0.75rem;
+  font-size: 13px;
+}
+
+.root td {
+  padding-left: 0.5rem;
+  padding-top: 0.33rem;
+  padding-bottom: 0.33rem;
+  border: none;
+}
+
+.root tbody tr:nth-child(odd) {
+  background-color: #EEE;
+}
+
+.root h2 {
+  margin: 1.5rem 0 1.0rem;
+}
+
+.root li {
+  margin-bottom: 0.3rem;
+}
+
+/*
+ * Button style shamelessly taken from Bootstrap, since the Bootstrap theme for
+ * for Typography.js's only emulates the UI library.
+ */
+.root button {
+  cursor: pointer;
+  color: #fff;
+  background-color: #343a40;
+  border-color: #343a40;
+
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: .375rem .75rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  border-radius: .25rem;
+  transition:
+    color .15s ease-in-out,
+    background-color .15s ease-in-out,
+    border-color .15s ease-in-out,
+    box-shadow .15s ease-in-out;
+}
+
+.root button:hover {
+    color: #fff;
+    background-color: #23272b;
+    border-color: #1d2124;
+    text-decoration: none;
+}
+
+@media print {
+  /* A shameful hack to prevent trailing blank page when printing */
+  .root {
+    margin-bottom: -5rem;
+  }
+
+  /* Less shameful, but still in the same category... */
+  .root ul {
+    margin-bottom: 0;
+  }
+
+  /* Use darker background for alternating rows when printing */
+  .root tbody tr:nth-child(odd) {
+    background-color: #DDD;
+  }
+
+  .root button {
+    display: none;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "toastmasters-agendas",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "gatsby": "^1.9.277",
+    "gatsby-link": "^1.6.46",
+    "gatsby-plugin-react-helmet": "^2.0.11",
+    "gatsby-plugin-typography": "^1.7.19",
+    "qs": "^6.5.2",
+    "react-helmet": "^5.2.0",
+    "typography-theme-bootstrap": "^0.16.7"
+  },
+  "scripts": {
+    "build": "gatsby build",
+    "develop": "gatsby develop",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
