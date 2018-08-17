@@ -28,17 +28,7 @@ function IndexPage() {
     );
   }
 
-  const tableRows = meeting.items.map((item, i) =>
-    <tr key={i}>
-      <td>
-        {/* Janky way to pad number... */}
-        12:{item.start < 10 ? '0' + item.start : item.start}
-      </td>
-      <td>{item.text}</td>
-      <td>{item.who}</td>
-    </tr>
-  );
-
+  const tableRows = meeting.items.map(getMeetingItemRow);
   const officerListItems = meeting.officers.map(([title, name], i) =>
     <li key={i}>{title}: {name}</li>
   );
@@ -47,10 +37,8 @@ function IndexPage() {
     <div className={css.root}>
       <div className={css.heading}>
         <h1>Club Meeting Agenda for {meeting.date}</h1>
-        {/*<h2><a href="javascript:window.print()">Print</a></h2>*/}
-        <h2><button className="btn" onClick={window.print}>Print Agenda</button></h2>
+        <h2><button onClick={window.print}>Print Agenda</button></h2>
       </div>
-      
       <table>
         <thead>
           <tr>
@@ -68,6 +56,33 @@ function IndexPage() {
         {officerListItems}
       </ul>
     </div>
+  );
+}
+
+function getMeetingItemRow(item, i) {
+  let extras = null;
+
+  if (item.extra && item.extra.speech) {
+    const {track, project, title} = item.extra.speech;
+    extras = (
+      <span>
+        {/* Join track and project with colon only if both exist */}
+        {'. '}{[track, project].filter(x => x).join(': ')}<br />
+        {/* Truncate title to a maximum of 93 characters */}
+        Title: {title.length > 90 ? title.slice(0, 90) + '...' : title}
+      </span>
+    );
+  }
+
+  return (
+    <tr key={i}>
+      <td>
+        {/* Janky way to pad number... */}
+        12:{item.start < 10 ? '0' + item.start : item.start}
+      </td>
+      <td>{item.text}{extras}</td>
+      <td>{item.who}</td>
+    </tr>
   );
 }
 

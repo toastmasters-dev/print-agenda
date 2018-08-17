@@ -40,7 +40,7 @@ export function getMeeting(queryString) {
   const items = meetingTemplate.map((row, i) => {
     let {text, who, duration} = row;
     let person = null;
-    let subtext = null;
+    let extra = null;
 
     if (who === null) {
       // There is no person associated with this meeting slot.
@@ -59,7 +59,13 @@ export function getMeeting(queryString) {
       // Ugh. Do this by taking the number which appears last.
       duration = Number(speech.duration.match(/\d+/g).slice(-1).pop())
       // Add additional information to render for this agenda item.
-      subtext = null; // TODO
+      extra = {
+        speech: {
+          track: speech.track,
+          project: speech.project,
+          title: speech.title,
+        },
+      };
 
     } else {
       throw Error(
@@ -71,7 +77,7 @@ export function getMeeting(queryString) {
       start: minuteCounter,
       who,
       text,
-      subtext,
+      extra,
     };
 
     if (duration === null) {
@@ -176,7 +182,7 @@ const meetingTemplate = [
   {
     text: 'General Evaluator conducts evaluation portion of the meeting',
     who: {role: 'general evaluator'},
-    duration: 0,
+    duration: 1,
   },
   {
     text: 'Evaluator #1',
@@ -200,7 +206,7 @@ const meetingTemplate = [
   },
   {
     text: 'Ah Counter Report',
-    who: {role: 'timer'},
+    who: {role: 'ah counter'},
     duration: 1,
   },
   {
