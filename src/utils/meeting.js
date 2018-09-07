@@ -24,103 +24,125 @@ export function getMeeting(queryString) {
     );
   }
 
-  // Only care about agenda data from this point on...
-  agenda = agenda.data;
+  const items = genMeetingItems(MEETING_TEMPLATE, agenda.data);
 
-  // The meeting starts at 5 minutes past the hour, and ends at 55 minutes past
-  // the hour.
-  const [minuteStart, minuteEnd] = [5, 55];
-  // Keep track of how many minutes into the meeting the current agenda item
-  // is. Initialize it to the start.
-  let minuteCounter = minuteStart;
-  // Take note of which agenda item has expanding duration. This should only be
-  // table topics.
-  let stretchItem = null;
-
-  const items = meetingTemplate.map((row, i) => {
-    let {text, who, duration} = row;
-    let person = null;
-    let extra = null;
-
-    if (who === null) {
-      // There is no person associated with this meeting slot.
-
-    } else if (who.role) {
-      who = agenda.items[who.role]
-      
-    } else if (who.officer) {
-      who = agenda.officers[who.officer];
-
-    } else if (who.speaker) {
-      // Adjust speaker number to be 0-based index.
-      const speech = agenda.items.speeches[who.speaker - 1];
-      who = speech.speaker;
-      // Assign duration by parsing the text description of the speech length.
-      // Ugh. Do this by taking the number which appears last.
-      duration = Number(speech.duration.match(/\d+/g).slice(-1).pop())
-      // Add additional information to render for this agenda item.
-      extra = {
-        speech: {
-          track: speech.track,
-          project: speech.project,
-          title: speech.title,
-        },
+  // Assign an absolute starting time for each meeting item, and find the index
+  // of the item with the flexible duration.
+  const {minute, flexItemIdx} = items.reduce(
+    ({minute, flexItemIdx}, item, i) => {
+      item.start = minute;
+      return {
+        minute: minute + item.duration,
+        // Record index of item where `duration` is null. Only one such item is
+        // expected.
+        flexItemIdx: item.duration === null ? i : flexItemIdx,
       };
+    },
+    {minute: MEETING_TIMES.startMinute, flexItemIdx: -1},
+  );
 
-    } else {
-      throw Error(
-        'Unknown value of `who` encountered while processing meeting ' +
-        'template item ' + JSON.stringify());
-    }
+  // Compute the flexible duration by taking the difference of the expected and
+  // actual meeting end.
+  const flexDuration = MEETING_TIMES.endMinute - minute;
 
-    const result = {
-      start: minuteCounter,
-      who,
-      text,
-      extra,
-    };
+  // TODO: When having not enough time for table topics, intelligently remove
+  //   them from the agenda rather than erroring out.
 
-    if (duration === null) {
-      stretchItem = i;
-    } else {
-      minuteCounter += duration;
-    }
-
-    return result;
-  });
-
-  const lastItem = items.slice(-1).pop();
-  // Compute the the stretch duration by taking the difference of the expected
-  // meeting end.
-  const stretchDuration = minuteEnd - lastItem.start;
-
-  // TODO: Intelligently take table topics out of agenda based on input rather
-  //   than erroring out.
-
-  if (stretchDuration < 0) {
+  if (flexDuration < 0) {
     throw Error(
-      `Meeting ends at ${lastItem.start} min past the hour, which is after ` +
-      `the ${minuteEnd} min mark. Check the duration of the speeches: ` +
-      JSON.stringify(agenda.items.speeches),
+      `Meeting ends at ${minute} min past the hour, which is after ` +
+      `the ${MEETING_TIMES.endMinute} min mark. Check the duration of the ` +
+      `speeches: ${JSON.stringify(agenda.data.items.speeches)}`,
     );
   }
 
-  // With the stretch duration computed, perform a second pass and shift the
-  // start times of affected agenda items.
-  for (let i = stretchItem + 1; i < items.length; ++i) {
-    items[i].start += stretchDuration;
-  }
+  // With this duration computed, shift the start times of all items which
+  // come after the flexble item by that amount of time.
+  items.slice(flexItemIdx + 1).forEach(item => item.start += flexDuration);
 
   return {
-    date: agenda.date,
+    date: agenda.data.date,
     items,
-    officers: officerTitles.map(([officer, title]) =>
-      [title, agenda.officers[officer]]
+    officers: OFFICER_TITLES.map(([officer, title]) =>
+      [title, agenda.data.officers[officer]]
     ),
   };
 }
 
-const meetingTemplate = [
+function genMeetingItems(meetingTemplate, agenda) {
+  const listOfLists = meetingTemplate.map(row => {
+    const {text, who, duration} = row;
+
+    if (who === null) {
+      // There is no person associated with this meeting slot.
+      return [row];
+
+    } else if (who.role) {
+      return [{duration, who: agenda.items[who.role], text}];
+
+    } else if (who.officer) {
+      return [{duration, who: agenda.officers[who.officer], text}];
+
+    } else if (who.speakers) {
+      return agenda.items.speeches.map((speech, i) => {
+        const {track, project, title, speaker, duration} = speech;
+
+        return {
+          // Compute duration by parsing the text description of the speech
+          // length... Ugh. Extract the last number from this string.
+          duration: Number(duration.match(/\d+/g).slice(-1).pop()),
+          who: speaker,
+          // Include speech number in the agenda item text.
+          text: `${text}${i + 1}`,
+          // Add additional information for the renderer to consume.
+          extra: {
+            speech: {track, project, title},
+          },
+        };
+      });
+
+    } else if (who.evaluators) {
+      return agenda.items.speeches.map((speech, i) => {
+        const speechNum = i + 1;
+        const key = `evaluator ${speechNum}`;
+        const evaluator = agenda.items[key];
+
+        if (!evaluator) {
+          throw new Error(
+            `Evaluator for speech ${speechNum} not found. Missing key ` +
+            `"${key}".`,
+          );
+        }
+
+        return {
+          duration: duration,
+          // Refer back to the corresponding evaluator in a janky way.
+          who: evaluator,
+          // Include speech evaluation number in the agenda item text.
+          text: `${text}${i + 1}`,
+        };
+      });
+
+    } else {
+      throw Error(
+        'Unknown value of `who` encountered while processing meeting ' +
+        'template item ' + JSON.stringify(who),
+      );
+    }
+  });
+
+  // Return flattened list.
+  return [].concat(...listOfLists);
+}
+
+// The meeting starts at 5 minutes past the hour, and ends at 55 minutes past
+// the hour.
+const MEETING_TIMES = {
+  startMinute: 5,
+  endMinute: 56,
+};
+
+const MEETING_TEMPLATE = [
   {
     text: 'Sergeant of Arms opens meeting and introduces Toastmaster',
     who: {officer: 'soa'},
@@ -156,22 +178,16 @@ const meetingTemplate = [
     who: {role: 'jokemaster'},
     duration: 2,
   },
+  // Placeholder for speches which are filled from agenda data.
   {
-    text: 'Speaker #1',
-    who: {speaker: 1},
-    // Duration computed at runtime.
-    duration: undefined,
-  },
-  {
-    text: 'Speaker #2',
-    who: {speaker: 2},
-    // Duration computed at runtime.
-    duration: undefined,
+    // Text computed dynamically.
+    text: 'Speech #',
+    who: {speakers: true},
   },
   {
     text: 'Topicsmaster conducts Table Topics',
     who: {role: 'topicsmaster'},
-    // Floating duration.
+    // Flexible duration.
     duration: null,
   },
   {
@@ -185,13 +201,8 @@ const meetingTemplate = [
     duration: 1,
   },
   {
-    text: 'Evaluator #1',
-    who: {role: 'evaluator 1'},
-    duration: 3,
-  },
-  {
-    text: 'Evaluator #2',
-    who: {role: 'evaluator 2'},
+    text: 'Evaluator #',
+    who: {evaluators: true},
     duration: 3,
   },
   {
@@ -241,7 +252,7 @@ const meetingTemplate = [
   },
 ];
 
-const officerTitles = [
+const OFFICER_TITLES = [
   ['president', 'President'],
   ['secretary', 'Secretary'],
   ['soa', 'Sergeant of Arms'],
