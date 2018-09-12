@@ -1,0 +1,35 @@
+language: node_js
+
+# Use stable version of Node.js
+node_js:
+  - node
+
+# Cache installed node_modules between builds
+cache:
+  directories:
+  - node_modules
+
+# Set up build dependencies
+install:
+  - 'yarn global add gatsby-cli'
+  - 'yarn install'
+
+# Compile the Gatsby site
+script:
+  - 'gatsby build --prefix-paths'
+
+# Deploy by pushing to GitHub Pages
+deploy:
+  provider: pages
+  github-token: $GITHUB_TOKEN
+  target-branch: gh-pages
+  # Necessary for GitHub Pages push deploy mechanism
+  skip-cleanup: true
+  # Look for artifacts in public/ directory
+  local_dir: public
+  # Push incremental commits rather than force-pushing
+  keep-history: true
+  # Skip deploys from branches other than the master
+  on:
+    branch: master
+
