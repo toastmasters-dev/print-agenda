@@ -104,7 +104,7 @@ function genMeetingItems(meetingTemplate, agenda) {
     } else if (who.evaluators) {
       return agenda.items.speeches.map((speech, i) => {
         const speechNum = i + 1;
-        const key = `evaluator ${speechNum}`;
+        const key = `evaluator${speechNum}`;
         const evaluator = agenda.items[key];
 
         if (!evaluator) {
@@ -165,7 +165,7 @@ const MEETING_TEMPLATE = [
   },
   {
     text: 'Ah Counter explains the role',
-    who: {role: 'ah counter'},
+    who: {role: 'ahCounter'},
     duration: 1,
   },
   {
@@ -197,7 +197,7 @@ const MEETING_TEMPLATE = [
   },
   {
     text: 'General Evaluator conducts evaluation portion of the meeting',
-    who: {role: 'general evaluator'},
+    who: {role: 'generalEvaluator'},
     duration: 1,
   },
   {
@@ -207,7 +207,7 @@ const MEETING_TEMPLATE = [
   },
   {
     text: 'General Evaluator calls for the reports',
-    who: {role: 'general evaluator'},
+    who: {role: 'generalEvaluator'},
     duration: 0,
   },
   {
@@ -217,7 +217,7 @@ const MEETING_TEMPLATE = [
   },
   {
     text: 'Ah Counter Report',
-    who: {role: 'ah counter'},
+    who: {role: 'ahCounter'},
     duration: 1,
   },
   {
@@ -232,7 +232,7 @@ const MEETING_TEMPLATE = [
   },
   {
     text: "General Evaluator conducts meeting's evaluation",
-    who: {role: 'general evaluator'},
+    who: {role: 'generalEvaluator'},
     duration: 3,
   },
   {
