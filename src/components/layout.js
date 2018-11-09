@@ -1,12 +1,12 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Helmet from 'react-helmet';
-import {withPrefix} from 'gatsby-link';
+import {StaticQuery, graphql, withPrefix} from 'gatsby';
 
-import Header from '../components/header';
+import css from '../styles/layout.module.css';
+import banner_img from '../images/tmi-banner.png';
 
-const Layout = ({children, data}) => (
-  <div>
+const render = (children, data) => (
+  <>
     <Helmet>
       <title>{data.site.siteMetadata.title}</title>
       <link
@@ -33,28 +33,18 @@ const Layout = ({children, data}) => (
       <meta name="msapplication-TileColor" content="#da532c" />
       <meta name="theme-color" content="#ffffff" />
     </Helmet>
-    <Header />
-    <div
-      style={{
-        margin: '0 auto',
-        maxWidth: 960,
-        padding: '0px 1.0875rem 1.45rem',
-        paddingTop: 0,
-      }}
-    >
-      {children()}
+    <div className={css.header}>
+      <img src={banner_img} alt="Toastmasters International" />
+      <hr />
     </div>
-  </div>
+    <div className={css.body}>
+      {children}
+    </div>
+  </>
 );
 
-Layout.propTypes = {
-  children: PropTypes.func,
-};
-
-export default Layout;
-
-export const query = graphql`
-  query SiteTitleQuery {
+const query = graphql`
+  {
     site {
       siteMetadata {
         title
@@ -62,3 +52,7 @@ export const query = graphql`
     }
   }
 `;
+
+export default ({children}) => (
+  <StaticQuery query={query} render={data => render(children, data)} />
+);

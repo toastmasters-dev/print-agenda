@@ -24,7 +24,7 @@ export function getMeeting(queryString) {
     );
   }
 
-  const items = genMeetingItems(MEETING_TEMPLATE, agenda.data);
+  const items = Array.from(genMeetingItems(MEETING_TEMPLATE, agenda.data));
 
   // Assign an absolute starting time for each meeting item, and find the index
   // of the item with the flexible duration.
@@ -69,25 +69,25 @@ export function getMeeting(queryString) {
   };
 }
 
-function genMeetingItems(meetingTemplate, agenda) {
-  const listOfLists = meetingTemplate.map(row => {
+function *genMeetingItems(meetingTemplate, agenda) {
+  for (const row of meetingTemplate) {
     const {text, who, duration} = row;
 
     if (who === null) {
       // There is no person associated with this meeting slot.
-      return [row];
+      yield row;
 
     } else if (who.role) {
-      return [{duration, who: agenda.items[who.role], text}];
+      yield {duration, who: agenda.items[who.role], text};
 
     } else if (who.officer) {
-      return [{duration, who: agenda.officers[who.officer], text}];
+      yield {duration, who: agenda.officers[who.officer], text};
 
     } else if (who.speakers) {
-      return agenda.items.speeches.map((speech, i) => {
+      for (const [i, speech] of agenda.items.speeches.entries()) {
         const {track, project, title, speaker, duration} = speech;
 
-        return {
+        yield {
           // Compute duration by parsing the text description of the speech
           // length... Ugh. Extract the last number from this string.
           duration: Number(duration.match(/\d+/g).slice(-1).pop()),
@@ -99,10 +99,10 @@ function genMeetingItems(meetingTemplate, agenda) {
             speech: {track, project, title},
           },
         };
-      });
+      }
 
     } else if (who.evaluators) {
-      return agenda.items.speeches.map((speech, i) => {
+      for (const i of agenda.items.speeches.keys()) {
         const speechNum = i + 1;
         const key = `evaluator${speechNum}`;
         const evaluator = agenda.items[key];
@@ -114,14 +114,14 @@ function genMeetingItems(meetingTemplate, agenda) {
           );
         }
 
-        return {
+        yield {
           duration: duration,
           // Refer back to the corresponding evaluator in a janky way.
           who: evaluator,
           // Include speech evaluation number in the agenda item text.
           text: `${text}${i + 1}`,
         };
-      });
+      }
 
     } else {
       throw Error(
@@ -129,10 +129,7 @@ function genMeetingItems(meetingTemplate, agenda) {
         'template item ' + JSON.stringify(who),
       );
     }
-  });
-
-  // Return flattened list.
-  return [].concat(...listOfLists);
+  }
 }
 
 // The meeting starts at 5 minutes past the hour, and ends at 55 minutes past

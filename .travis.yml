@@ -32,4 +32,3 @@ deploy:
   # Skip deploys from branches other than the master
   on:
     branch: master
-
