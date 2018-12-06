@@ -24,6 +24,7 @@ export function getMeeting(queryString) {
     );
   }
 
+  agenda.data.items.speeches = getFilteredSpeeches(agenda);
   const items = Array.from(genMeetingItems(MEETING_TEMPLATE, agenda.data));
 
   // Assign an absolute starting time for each meeting item, and find the index
@@ -67,6 +68,19 @@ export function getMeeting(queryString) {
       [title, agenda.data.officers[officer]]
     ),
   };
+}
+
+/**
+ * Transform the agenda to exclude blank speeches.
+ *
+ * When a speech Agenda data contains blank speech entries, it is not supposed
+ * to appear in the agenda.
+ */
+function getFilteredSpeeches(agenda) {
+  // Only leave those speech items with at least one non-empty-string value.
+  return agenda.data.items.speeches.filter(speech =>
+    !Object.values(speech).every(s => s === '')
+  );
 }
 
 function *genMeetingItems(meetingTemplate, agenda) {
