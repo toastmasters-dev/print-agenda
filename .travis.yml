@@ -7,16 +7,16 @@ node_js:
 # Cache installed node_modules between builds
 cache:
   directories:
-  - node_modules
+    - node_modules
 
 # Set up build dependencies
 install:
-  - 'yarn global add gatsby-cli'
-  - 'yarn install'
+  - yarn global add gatsby-cli
+  - yarn install
 
 # Compile the Gatsby site
 script:
-  - 'gatsby build --prefix-paths'
+  - gatsby build --prefix-paths
 
 # Deploy by pushing to GitHub Pages
 deploy:
